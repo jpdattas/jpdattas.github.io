@@ -81,7 +81,8 @@
             declared_flights[code]["flightPath"].setMap(map);
           }
         });
-        // console.log(declared_flights[INT470])
+        // console.log(declared_flights["INT470"])
+        // console.log(declared_flights["INT471"])
         socket.emit(['FLIGHTS'], function(msg){
         });
         var flights = []
