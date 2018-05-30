@@ -26,12 +26,12 @@
 
         socket.on(['AIRPORTS'], function(msg){
           for (x in msg) {
-            code = msg[x].airport_code
-            position = msg[x].airport_position
-            city = msg[x].city
-            country = msg[x].country
-            country_code = msg[x].country_code
-            name = msg[x].name
+            var code = msg[x].airport_code
+            var position = msg[x].airport_position
+            var city = msg[x].city
+            var country = msg[x].country
+            var country_code = msg[x].country_code
+            var name = msg[x].name
             aeropuertos[code] = []
             aeropuertos[code]["position"] = position
             aeropuertos[code]["city"] = city
@@ -40,7 +40,12 @@
             aeropuertos[code]["name"] = name
             aeropuertos[code]["marker"] = new google.maps.Marker({
               position: new google.maps.LatLng(position[0], position[1]),
-              icon: "aeropuerto.png",
+              icon: {
+                url: "aeropuerto.png",
+                anchor: new google.maps.Point(10, 10)
+              },
+
+              // "aeropuerto.png",
               map: map
             });
           }
@@ -49,25 +54,25 @@
         });
         var declared_flights = []
         socket.on(['FLIGHTS'], function(msg){
+          console.log(msg)
           for (x in msg) {
-            code = msg[x].code
-            airline = msg[x].airline
-            origin = msg[x].origin
-            destination = msg[x].destination
-            origin_position = origin.airport_position
-            origin_position = new google.maps.LatLng(origin_position[0], origin_position[1])
-            destination_position = destination.airport_position
-            destination_position = new google.maps.LatLng(destination_position[0], destination_position[1])
-            plane = msg[x].plane
-            seats = msg[x].seats
+            var code = msg[x].code
+            //console.log(typeof code)
+            var airline = msg[x].airline
+            var origin = msg[x].origin
+            var destination = msg[x].destination
+            var origin_position = origin.airport_position
+            var origin_position = new google.maps.LatLng(origin_position[0], origin_position[1])
+            var destination_position = destination.airport_position
+            var destination_position = new google.maps.LatLng(destination_position[0], destination_position[1])
+            var plane = msg[x].plane
+            var seats = msg[x].seats
             declared_flights[code] = []
             declared_flights[code]["plane"] = plane
             declared_flights[code]["seats"] = seats
             declared_flights[code]["destination"] = destination
             declared_flights[code]["origin"] = origin
             declared_flights[code]["airline"] = airline
-            declared_flights[code]["name"] = name
-
             declared_flights[code]["flightPlanCoordinates"] = []
             declared_flights[code]["flightPlanCoordinates"].push(origin_position);
             declared_flights[code]["flightPlanCoordinates"].push(destination_position);
@@ -81,8 +86,6 @@
             declared_flights[code]["flightPath"].setMap(map);
           }
         });
-        // console.log(declared_flights["INT470"])
-        // console.log(declared_flights["INT471"])
         socket.emit(['FLIGHTS'], function(msg){
         });
         var flights = []
@@ -93,20 +96,17 @@
             flights[code] = []
             marker = flights[code]["marker"] = new google.maps.Marker({
               position: new google.maps.LatLng(position[0], position[1]),
-              icon: "plane.png",
+              icon: {
+                url: "plane.png",
+                anchor: new google.maps.Point(10, 10)
+              },
               map: map
             });
-
-
-            plane = declared_flights[code]["plane"]
-            seats = declared_flights[code]["seats"]
-            console.log(plane)
-            console.log(code)
-            console.log(declared_flights)
-            destination = declared_flights[code]["destination"]
-            origin = declared_flights[code]["origin"]
-            airline = declared_flights[code]["airline"]
-            name = declared_flights[code]["name"]
+            var plane = declared_flights[code]["plane"]
+            var seats = declared_flights[code]["seats"]
+            var destination = declared_flights[code]["destination"]
+            var origin = declared_flights[code]["origin"]
+            var airline = declared_flights[code]["airline"]
 
             flights[code]["infowindow"] = new google.maps.InfoWindow();
             google.maps.event.addListener(marker, 'click', (function(marker, code) {
@@ -115,21 +115,13 @@
                "Code: " + code + "<br>" +
                "Plane: " + plane + "<br>" +
                "Seats: " + seats + "<br>" +
-               "Origin: " + origin.name + "<br>" +
-               "Destination: " + destination.name + "<br>" +
-               "Airline: " + airline + "<br>" +
-               "Name: " + name + "<br>";
+               "Origin: " + origin.name + ": " + origin.city + ", " + origin.country + "<br>" +
+               "Destination: " + destination.name + ": " + destination.city + ", " + destination.country + "<br>" +
+               "Airline: " + airline + "<br>";
                flights[code]["infowindow"].setContent(flights[code]["contentString"]);
                flights[code]["infowindow"].open(map, marker);
                }
              })(marker, code));
-
-
-
-
-
-
-
 
             flights[code]["flightPlanCoordinates"] = []
             flights[code]["flightPath"] = new google.maps.Polyline({
@@ -143,7 +135,13 @@
           }
           else{
             flights[code]["flightPlanCoordinates"].push(flights[code]["marker"]["position"]);
-            flights[code]["flightPath"].setPath(flights[code]["flightPlanCoordinates"])
+            flights[code]["flightPath"].setPath(flights[code]["flightPlanCoordinates"]);
+            // var cordinates = flights[code]["flightPlanCoordinates"]
+            // var x1 = cordinates[cordinates.length - 1]
+            // console.log(x1)
+            // var x1 = flights[code]["flightPlanCoordinates"][-1][0]
+            // var angle =
+            // flights[code]["flightPath"].setRotation(angle);
             flights[code]["marker"].setPosition(new google.maps.LatLng(position[0], position[1]));
           }
 
