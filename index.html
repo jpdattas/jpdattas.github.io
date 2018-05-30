@@ -3,7 +3,7 @@
   <head>
     <style>
        #map {
-        height: 400px;
+        height: 590px;
         width: 100%;
        }
     </style>
@@ -15,41 +15,128 @@
     <script>
       function initMap() {
 
-        var santiago = new google.maps.LatLng(-33.5, -70);
+        var medio = new google.maps.LatLng(-33.7198, -65.1647);
         var map = new google.maps.Map(document.getElementById('map'), {
-          zoom: 4,
-          center: santiago,
+          zoom: 7,
+          center: medio,
         });
-        // var marker = new google.maps.Marker({
-        //   position: santiago,
-        //   map: map,
-        //   icon: "plane.png"
-        // });
         var socket = io('wss://integracion-tarea-3.herokuapp.com', {'path': '/flights'});
-        var flights = []
 
-        socket.on('AIRPORTS', function(msg){
-          console.log("quweoquweoiuweoiuo");
-          console.log(msg);
+        var aeropuertos = []
+
+        socket.on(['AIRPORTS'], function(msg){
+          for (x in msg) {
+            code = msg[x].airport_code
+            position = msg[x].airport_position
+            city = msg[x].city
+            country = msg[x].country
+            country_code = msg[x].country_code
+            name = msg[x].name
+            aeropuertos[code] = []
+            aeropuertos[code]["position"] = position
+            aeropuertos[code]["city"] = city
+            aeropuertos[code]["country"] = country
+            aeropuertos[code]["country_code"] = country_code
+            aeropuertos[code]["name"] = name
+            aeropuertos[code]["marker"] = new google.maps.Marker({
+              position: new google.maps.LatLng(position[0], position[1]),
+              icon: "aeropuerto.png",
+              map: map
+            });
+          }
         });
+        socket.emit(['AIRPORTS'], function(msg){
+        });
+        var declared_flights = []
+        socket.on(['FLIGHTS'], function(msg){
+          for (x in msg) {
+            code = msg[x].code
+            airline = msg[x].airline
+            origin = msg[x].origin
+            destination = msg[x].destination
+            origin_position = origin.airport_position
+            origin_position = new google.maps.LatLng(origin_position[0], origin_position[1])
+            destination_position = destination.airport_position
+            destination_position = new google.maps.LatLng(destination_position[0], destination_position[1])
+            plane = msg[x].plane
+            seats = msg[x].seats
+            declared_flights[code] = []
+            declared_flights[code]["plane"] = plane
+            declared_flights[code]["seats"] = seats
+            declared_flights[code]["destination"] = destination
+            declared_flights[code]["origin"] = origin
+            declared_flights[code]["airline"] = airline
+            declared_flights[code]["name"] = name
 
+            declared_flights[code]["flightPlanCoordinates"] = []
+            declared_flights[code]["flightPlanCoordinates"].push(origin_position);
+            declared_flights[code]["flightPlanCoordinates"].push(destination_position);
+            declared_flights[code]["flightPath"] = new google.maps.Polyline({
+              path: declared_flights[code]["flightPlanCoordinates"],
+              geodesic: true,
+              strokeColor: '#1f5b89',
+              strokeOpacity: 0.3,
+              strokeWeight: 10
+            });
+            declared_flights[code]["flightPath"].setMap(map);
+          }
+        });
+        // console.log(declared_flights[INT470])
+        socket.emit(['FLIGHTS'], function(msg){
+        });
+        var flights = []
         socket.on('POSITION', function(msg){
           code = msg.code;
           position = msg.position;
           if (flights[code] == null) {
             flights[code] = []
-            flights[code]["marker"] = new google.maps.Marker({
+            marker = flights[code]["marker"] = new google.maps.Marker({
               position: new google.maps.LatLng(position[0], position[1]),
               icon: "plane.png",
               map: map
             });
+
+
+            plane = declared_flights[code]["plane"]
+            seats = declared_flights[code]["seats"]
+            console.log(plane)
+            console.log(code)
+            console.log(declared_flights)
+            destination = declared_flights[code]["destination"]
+            origin = declared_flights[code]["origin"]
+            airline = declared_flights[code]["airline"]
+            name = declared_flights[code]["name"]
+
+            flights[code]["infowindow"] = new google.maps.InfoWindow();
+            google.maps.event.addListener(marker, 'click', (function(marker, code) {
+             return function() {
+               flights[code]["contentString"] =
+               "Code: " + code + "<br>" +
+               "Plane: " + plane + "<br>" +
+               "Seats: " + seats + "<br>" +
+               "Origin: " + origin.name + "<br>" +
+               "Destination: " + destination.name + "<br>" +
+               "Airline: " + airline + "<br>" +
+               "Name: " + name + "<br>";
+               flights[code]["infowindow"].setContent(flights[code]["contentString"]);
+               flights[code]["infowindow"].open(map, marker);
+               }
+             })(marker, code));
+
+
+
+
+
+
+
+
             flights[code]["flightPlanCoordinates"] = []
             flights[code]["flightPath"] = new google.maps.Polyline({
               path: flights[code]["flightPlanCoordinates"],
               geodesic: true,
-              strokeColor: '#FFC300',
-              strokeOpacity: 1.0,
-              strokeWeight: 2
+              strokeColor: '#FFFF00',
+              strokeOpacity: 0.7,
+              strokeWeight: 7
             });
             flights[code]["flightPath"].setMap(map);
           }
